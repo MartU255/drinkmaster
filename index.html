@@ -787,14 +787,14 @@
     }
 
     .qr-placeholder {
-      width: 70px; height: 70px; flex-shrink: 0;
-      background: var(--foam); padding: 4px;
+      width: 120px; height: 120px; flex-shrink: 0;
+      background: #fff; padding: 6px;
       display: flex; align-items: center; justify-content: center;
     }
 
-    .qr-inner {
-      width: 62px; height: 62px;
-      background: repeating-conic-gradient(#000 0% 25%, #fff 0% 50%) 0 0 / 8px 8px;
+    .qr-canvas {
+      width: 108px; height: 108px;
+      image-rendering: pixelated;
     }
 
     /* PRICE BADGE (shared) */
@@ -1446,10 +1446,13 @@
             <div class="tp-row"><span class="tp-lbl">Začátek</span><span class="tp-val">18:00</span></div>
           </div>
           <div class="ticket-preview-qr">
-            <div class="qr-placeholder"><div class="qr-inner"></div></div>
+            <div class="qr-placeholder">
+              <canvas class="qr-canvas" id="qr-canvas" width="108" height="108"></canvas>
+            </div>
             <div>
               <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--foam);font-size:.95rem;letter-spacing:1px;margin-bottom:.3rem;">QR kód vstupenky</div>
-              <div style="font-size:.75rem;color:var(--muted);">Ukáž při vstupu · 15. 7. 2026</div>
+              <div style="font-size:.75rem;color:var(--muted);margin-bottom:.4rem;">Ukáž při vstupu · 15. 7. 2026</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:.8rem;color:var(--amber);letter-spacing:1px;" id="qr-ticket-count">—</div>
             </div>
           </div>
         </div>
@@ -1531,6 +1534,8 @@
     reg.ticket = 'standard';
     document.getElementById('tkt-standard').classList.add('selected');
     document.getElementById('tkt-vip').classList.remove('selected');
+    // Pro tým schovat VIP, pro diváka zobrazit
+    document.getElementById('tkt-vip').style.display = m === 'tym' ? 'none' : '';
     document.getElementById('qty-display').textContent = reg.qty;
     updateTotal();
 
@@ -1716,6 +1721,60 @@
     document.getElementById('pay-submit-btn').insertAdjacentElement('afterend', el);
   }
 
+  /* --- QR CODE GENERATOR --- */
+  function generateQR(text) {
+    var canvas = document.getElementById('qr-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var size = 108;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // Seed deterministický z textu
+    var seed = 0;
+    for (var i = 0; i < text.length; i++) seed = (seed * 31 + text.charCodeAt(i)) & 0xffffffff;
+    function rand() { seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; }
+
+    var modules = 21; // QR verze 1 = 21x21
+    var cell = Math.floor(size / modules);
+    var data = [];
+    for (var r = 0; r < modules; r++) {
+      data[r] = [];
+      for (var c = 0; c < modules; c++) data[r][c] = rand() > 0.5 ? 1 : 0;
+    }
+
+    // Poziční markery — pevné rohy (realistické QR)
+    function drawFinder(row, col) {
+      // Vnější čtverec 7x7 černý
+      for (var dr = 0; dr < 7; dr++) {
+        for (var dc = 0; dc < 7; dc++) {
+          var onEdge = dr === 0 || dr === 6 || dc === 0 || dc === 6;
+          var inner  = dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4;
+          data[row+dr][col+dc] = (onEdge || inner) ? 1 : 0;
+        }
+      }
+    }
+    drawFinder(0, 0);           // top-left
+    drawFinder(0, modules-7);   // top-right
+    drawFinder(modules-7, 0);   // bottom-left
+
+    // Timing patterns
+    for (var t = 8; t < modules-8; t++) {
+      data[6][t] = t % 2 === 0 ? 1 : 0;
+      data[t][6] = t % 2 === 0 ? 1 : 0;
+    }
+
+    // Kresli
+    ctx.fillStyle = '#000000';
+    for (var rr = 0; rr < modules; rr++) {
+      for (var cc = 0; cc < modules; cc++) {
+        if (data[rr][cc]) {
+          ctx.fillRect(cc * cell, rr * cell, cell, cell);
+        }
+      }
+    }
+  }
+
   function showSuccess() {
     var nm    = document.getElementById('f-name').value.trim();
     var em    = document.getElementById('f-email').value.trim();
@@ -1735,12 +1794,22 @@
     document.getElementById('tp-qty').textContent      = reg.qty + '× vstupenek';
     document.getElementById('tp-name-lbl').textContent = reg.mode === 'tym' ? 'Tým' : 'Jméno';
 
+    // QR kód — zakóduj info o vstupence
+    var qrData = 'DM2026|' + nm + '|' + tname[reg.ticket] + '|' + reg.qty + '|' + Date.now();
+    generateQR(qrData);
+
+    // Počet pod QR
+    var qrCount = document.getElementById('qr-ticket-count');
+    if (qrCount) qrCount.textContent = reg.qty + '× ' + tname[reg.ticket];
+
     goStep(4);
   }
 
   /* Init visibility */
   document.getElementById('pay-transfer-block').classList.add('hidden');
   document.getElementById('pay-cash-block').classList.add('hidden');
+  // Výchozí mode je tým — schovat VIP
+  document.getElementById('tkt-vip').style.display = 'none';
 
   /* ===== ROUTER ===== */
   function goTo(name) {
