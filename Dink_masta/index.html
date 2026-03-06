@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrinkMaster Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #F5A623;
+      --amber: #E8820C;
+      --dark: #0A0A0A;
+      --surface: #111111;
+      --foam: #FFF8E7;
+      --text: #E8D5A3;
+      --muted: #8A7A5A;
+      --border: rgba(245,166,35,0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 4rem; height: 64px;
+      background: rgba(10,10,10,0.94);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem; letter-spacing: 4px; color: var(--gold);
+      cursor: pointer; user-select: none;
+    }
+
+    .nav-links { display: flex; list-style: none; }
+
+    .nav-links li a {
+      display: block; padding: 0 1.3rem; height: 64px; line-height: 64px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.82rem; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--muted); text-decoration: none; position: relative; transition: color 0.2s;
+    }
+
+    .nav-links li a::after {
+      content: ''; position: absolute;
+      bottom: 0; left: 1.3rem; right: 1.3rem;
+      height: 2px; background: var(--gold);
+      transform: scaleX(0); transition: transform 0.25s;
+    }
+
+    .nav-links li a:hover { color: var(--text); }
+    .nav-links li a.active { color: var(--gold); }
+    .nav-links li a.active::after { transform: scaleX(1); }
+
+    /* PAGE SYSTEM */
+    .page {
+      display: none; opacity: 0; transform: translateY(14px);
+      transition: opacity 0.38s ease, transform 0.38s ease;
+      min-height: 100vh; padding-top: 64px;
+    }
+
+    .page.active { display: block; }
+    .page.visible { opacity: 1; transform: translateY(0); }
+
+    /* SHARED */
+    .page-inner { max-width: 1280px; margin: 0 auto; padding: 3.5rem 4rem 6rem; }
+
+    .page-header {
+      padding: 3.5rem 0 2.5rem; border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem; display: flex; justify-content: space-between;
+      align-items: flex-end; flex-wrap: wrap; gap: 1rem;
+    }
+
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem; letter-spacing: 5px; text-transform: uppercase;
+      color: var(--amber); margin-bottom: 0.5rem;
+    }
+
+    .page-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.5rem, 7vw, 6rem); line-height: 1; color: var(--foam);
+    }
+
+    /* BUTTONS */
+    .btn-gold {
+      background: var(--gold); color: var(--dark);
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      font-size: 0.88rem; letter-spacing: 3px; text-transform: uppercase;
+      padding: 0.85rem 2rem; border: none; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      transition: transform 0.15s, box-shadow 0.15s;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+
+    .btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,166,35,0.35); }
+
+    .btn-ghost {
+      background: transparent; color: var(--gold);
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+      font-size: 0.88rem; letter-spacing: 3px; text-transform: uppercase;
+      padding: 0.85rem 2rem; border: 1px solid rgba(245,166,35,0.4);
+      cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s;
+    }
+
+    .btn-ghost:hover { background: rgba(245,166,35,0.08); border-color: var(--gold); }
+
+    /* FOOTER */
+    footer {
+      padding: 2rem 4rem; display: flex; justify-content: space-between;
+      align-items: center; border-top: 1px solid var(--border);
+      flex-wrap: wrap; gap: 1rem;
+    }
+
+    .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 3px; color: var(--gold); }
+    .footer-text { font-size: 0.78rem; color: var(--muted); letter-spacing: 1px; }
+    .footer-links { display: flex; gap: 1.5rem; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--gold); }
+
+    /* ===================== HOME ===================== */
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      text-align: center; position: relative; overflow: hidden; padding: 4rem 2rem;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 50% 90%, rgba(245,166,35,0.13) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 15% 20%, rgba(255,75,31,0.06) 0%, transparent 60%),
+        var(--dark);
+    }
+
+    .hero-badge {
+      display: inline-block; font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.75rem; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--amber); border: 1px solid rgba(245,166,35,0.3);
+      padding: 0.4rem 1.2rem; margin-bottom: 2rem;
+      animation: fadeDown 0.7s ease both; position: relative; z-index: 1;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(5rem, 16vw, 14rem); line-height: 0.85;
+      letter-spacing: 4px; color: var(--foam);
+      animation: fadeDown 0.7s ease 0.08s both; position: relative; z-index: 1;
+    }
+
+    .hero-title .outline {
+      -webkit-text-stroke: 2px var(--gold); color: transparent;
+      display: block; font-size: clamp(3rem, 9vw, 8rem); letter-spacing: 10px;
+    }
+
+    .hero-authors {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.82rem; letter-spacing: 4px; text-transform: uppercase;
+      color: var(--muted); margin-top: 0.8rem;
+      animation: fadeDown 0.7s ease 0.14s both; position: relative; z-index: 1;
+    }
+
+    .hero-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(0.9rem, 2vw, 1.2rem); letter-spacing: 3px;
+      text-transform: uppercase; color: var(--muted); margin-top: 1rem;
+      animation: fadeDown 0.7s ease 0.18s both; position: relative; z-index: 1;
+    }
+
+    .hero-cta {
+      display: flex; gap: 1rem; margin-top: 2.5rem;
+      flex-wrap: wrap; justify-content: center;
+      animation: fadeDown 0.7s ease 0.26s both; position: relative; z-index: 1;
+    }
+
+    /* STATS */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    }
+
+    .stat-item { padding: 2.5rem 1.5rem; text-align: center; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; color: var(--gold); line-height: 1; }
+    .stat-lbl { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem; }
+
+    /* INFO + COUNTDOWN */
+    .ic-wrap {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 5rem; align-items: center;
+      padding: 5rem 4rem; max-width: 1280px; margin: 0 auto;
+    }
+
+    .info-cards { display: flex; flex-direction: column; gap: 0.8rem; }
+
+    .info-card {
+      display: flex; align-items: center; gap: 1.4rem;
+      padding: 1.2rem 1.6rem; border: 1px solid var(--border);
+      background: rgba(245,166,35,0.02); position: relative; overflow: hidden; transition: border-color 0.2s;
+    }
+
+    .info-card::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--gold); transform: scaleY(0); transition: transform 0.25s; transform-origin: bottom;
+    }
+
+    .info-card:hover { border-color: rgba(245,166,35,0.35); }
+    .info-card:hover::before { transform: scaleY(1); }
+    .info-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .info-lbl { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; letter-spacing: 3px; text-transform: uppercase; color: var(--amber); margin-bottom: 0.2rem; }
+    .info-val { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--foam); }
+    .info-val span { color: var(--gold); }
+
+    /* COUNTDOWN */
+    .cd-block { text-align: center; }
+    .cd-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; letter-spacing: 5px; text-transform: uppercase; color: var(--amber); margin-bottom: 1.5rem; }
+
+    .cd-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1.2rem; }
+
+    .cd-box {
+      background: rgba(245,166,35,0.05); border: 1px solid rgba(245,166,35,0.2);
+      padding: 1.2rem 0.5rem 0.8rem; position: relative;
+    }
+
+    .cd-box::before, .cd-box::after { content: ''; position: absolute; left: 12%; right: 12%; height: 1px; background: rgba(245,166,35,0.35); }
+    .cd-box::before { top: 0; }
+    .cd-box::after { bottom: 0; }
+
+    .cd-num { font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.2rem, 4vw, 3.5rem); color: var(--gold); line-height: 1; display: block; }
+    .cd-sep { font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; display: block; }
+    .cd-tag { display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--dark); background: var(--gold); padding: 0.3rem 1rem; }
+
+    /* ABOUT STRIP */
+    .about-strip {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center;
+      padding: 5rem 4rem; max-width: 1280px; margin: 0 auto; border-top: 1px solid var(--border);
+    }
+
+    .about-desc { font-size: 1.05rem; line-height: 1.75; color: var(--muted); }
+    .about-desc strong { color: var(--gold); }
+
+    .about-visual { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .about-card {
+      border: 1px solid var(--border); padding: 1.8rem 1.4rem;
+      background: rgba(245,166,35,0.02); transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .about-card:hover { border-color: rgba(245,166,35,0.3); transform: translateY(-3px); }
+    .about-card:nth-child(2) { margin-top: 1.5rem; }
+    .about-card-icon { font-size: 2rem; margin-bottom: 0.8rem; display: block; }
+    .about-card-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--gold); margin-bottom: 0.4rem; }
+    .about-card-text { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ===================== WEB PAGE (o webu) ===================== */
+    .web-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+
+    .web-block {
+      border: 1px solid var(--border); padding: 2.5rem;
+      background: rgba(245,166,35,0.02); position: relative; overflow: hidden;
+      transition: border-color 0.25s;
+    }
+
+    .web-block:hover { border-color: rgba(245,166,35,0.3); }
+
+    .web-block::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(to right, var(--gold), transparent);
+    }
+
+    .web-block-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+    .web-block-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--gold); margin-bottom: 1rem; letter-spacing: 1px; }
+
+    .web-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+
+    .web-list li {
+      display: flex; align-items: flex-start; gap: 0.8rem;
+      font-size: 0.95rem; color: var(--muted); line-height: 1.5;
+    }
+
+    .web-list li::before { content: '→'; color: var(--amber); font-family: 'Barlow Condensed', sans-serif; flex-shrink: 0; margin-top: 0.05rem; }
+
+    .web-list li strong { color: var(--text); font-weight: 600; }
+
+    .audience-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem; }
+
+    .audience-card {
+      border: 1px solid var(--border); padding: 1.5rem 1.2rem; text-align: center;
+      background: rgba(245,166,35,0.02); transition: all 0.2s;
+    }
+
+    .audience-card:hover { border-color: rgba(245,166,35,0.35); transform: translateY(-3px); }
+    .audience-card-icon { font-size: 2rem; display: block; margin-bottom: 0.6rem; }
+    .audience-card-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--gold); }
+    .audience-card-sub { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* TECH STACK */
+    .tech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+    .tech-card {
+      border: 1px solid var(--border); padding: 2rem 1.5rem;
+      background: rgba(245,166,35,0.02); position: relative; overflow: hidden;
+      transition: all 0.25s;
+    }
+
+    .tech-card:hover { border-color: rgba(245,166,35,0.35); transform: translateY(-4px); }
+
+    .tech-card::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(to right, transparent, var(--gold), transparent);
+      opacity: 0; transition: opacity 0.25s;
+    }
+
+    .tech-card:hover::after { opacity: 1; }
+
+    .tech-cat { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; letter-spacing: 4px; text-transform: uppercase; color: var(--amber); margin-bottom: 1rem; }
+    .tech-icon { font-size: 2rem; margin-bottom: 0.8rem; display: block; }
+    .tech-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--foam); margin-bottom: 0.3rem; }
+    .tech-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ===================== VÝZVY ===================== */
+    .ch-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1.5px; background: var(--border);
+    }
+
+    .ch-item {
+      background: var(--dark); padding: 2.5rem 2rem;
+      position: relative; overflow: hidden; transition: background 0.25s; cursor: default;
+    }
+
+    .ch-item::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 0;
+      background: var(--gold); transition: height 0.3s;
+    }
+
+    .ch-item:hover { background: rgba(245,166,35,0.04); }
+    .ch-item:hover::before { height: 100%; }
+
+    .ch-n { font-family: 'Bebas Neue', sans-serif; font-size: 4rem; color: rgba(245,166,35,0.07); line-height: 1; margin-bottom: 0.8rem; transition: color 0.25s; }
+    .ch-item:hover .ch-n { color: rgba(245,166,35,0.18); }
+    .ch-ic { font-size: 2rem; margin-bottom: 0.6rem; display: block; }
+    .ch-t { font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; color: var(--foam); text-transform: uppercase; margin-bottom: 0.5rem; }
+    .ch-d { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+    .ch-pts { display: inline-block; margin-top: 1rem; font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--amber); border: 1px solid rgba(245,166,35,0.2); padding: 0.2rem 0.7rem; }
+
+    /* ===================== PROGRAM ===================== */
+    .timeline { position: relative; }
+
+    .timeline::before {
+      content: ''; position: absolute; left: 110px; top: 0; bottom: 0; width: 1px;
+      background: linear-gradient(to bottom, var(--gold), rgba(245,166,35,0.04));
+    }
+
+    .tl-item {
+      display: flex; gap: 2.5rem; padding: 1.8rem 0;
+      border-bottom: 1px solid rgba(245,166,35,0.05);
+      align-items: flex-start; transition: padding-left 0.2s;
+    }
+
+    .tl-item:hover { padding-left: 0.5rem; }
+    .tl-time { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--gold); min-width: 110px; text-align: right; flex-shrink: 0; line-height: 1.2; }
+    .tl-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--dark); border: 2px solid var(--gold); margin-top: 0.4rem; flex-shrink: 0; position: relative; z-index: 1; transition: background 0.2s; }
+    .tl-item:hover .tl-dot { background: var(--gold); }
+    .tl-content { flex: 1; }
+    .tl-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--foam); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.25rem; }
+    .tl-note { font-size: 0.9rem; color: var(--muted); }
+    .tl-em { font-size: 1.4rem; margin-left: auto; padding-top: 0.1rem; flex-shrink: 0; }
+
+    /* ===================== REGISTRACE ===================== */
+    .reg-hero { text-align: center; padding: 3.5rem 0 3rem; }
+    .reg-big { font-family: 'Bebas Neue', sans-serif; font-size: clamp(4rem, 10vw, 9rem); line-height: 0.88; color: var(--foam); margin-bottom: 1rem; }
+    .reg-big em { font-style: normal; color: var(--gold); }
+    .reg-desc { font-size: 1.05rem; color: var(--muted); line-height: 1.7; max-width: 560px; margin: 0 auto 2.5rem; }
+
+    .price-badge {
+      display: inline-flex; align-items: baseline; gap: 0.3rem;
+      background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.2);
+      padding: 1.2rem 2rem; margin-bottom: 2rem;
+    }
+
+    .price-n { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--gold); line-height: 1; }
+    .price-c { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; color: var(--amber); letter-spacing: 2px; }
+    .price-s { font-size: 0.8rem; color: var(--muted); margin-left: 0.5rem; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 3rem; margin-top: 3rem; }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+
+    .form-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--amber); }
+
+    .form-input {
+      background: rgba(245,166,35,0.04); border: 1px solid var(--border);
+      padding: 0.85rem 1.2rem; color: var(--foam);
+      font-family: 'Barlow', sans-serif; font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s; width: 100%;
+    }
+
+    .form-input::placeholder { color: var(--muted); }
+    .form-input:focus { border-color: rgba(245,166,35,0.5); }
+
+    .form-submit { grid-column: 1 / -1; text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
+
+    .reg-note { font-size: 0.8rem; color: var(--muted); margin-top: 0.8rem; letter-spacing: 0.5px; }
+
+    /* ===================== ANIMATIONS ===================== */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 960px) {
+      nav { padding: 0 1.5rem; }
+      .nav-links li a { padding: 0 0.8rem; font-size: 0.74rem; letter-spacing: 1.5px; }
+      .page-inner { padding: 3rem 1.5rem 5rem; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .stat-item:nth-child(2) { border-right: none; }
+      .ic-wrap { grid-template-columns: 1fr; gap: 3rem; padding: 3rem 1.5rem; }
+      .about-strip { grid-template-columns: 1fr; gap: 2.5rem; padding: 3rem 1.5rem; }
+      .about-visual { grid-template-columns: 1fr 1fr; }
+      .web-grid { grid-template-columns: 1fr; }
+      .tech-grid { grid-template-columns: 1fr; }
+      .audience-grid { grid-template-columns: 1fr; }
+      .ch-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; gap: 1rem; }
+      footer { flex-direction: column; text-align: center; padding: 2rem; }
+      .timeline::before { left: 80px; }
+      .tl-time { min-width: 80px; font-size: 1.4rem; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-title { font-size: 4.5rem; }
+      .about-visual { grid-template-columns: 1fr; }
+      .about-card:nth-child(2) { margin-top: 0; }
+      .nav-logo { font-size: 1.2rem; letter-spacing: 2px; }
+      .nav-links li a { padding: 0 0.6rem; font-size: 0.7rem; letter-spacing: 1px; }
+    }
+
+    /* ===================== REGISTRATION FLOW ===================== */
+
+    /* STEPPER */
+    .stepper {
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 0 3.5rem; gap: 0; padding: 2rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .step { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; position: relative; }
+
+    .step-circle {
+      width: 42px; height: 42px; border-radius: 50%;
+      border: 2px solid rgba(245,166,35,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+      color: var(--muted); background: var(--dark);
+      transition: all 0.35s;
+    }
+
+    .step.active .step-circle {
+      border-color: var(--gold); color: var(--dark);
+      background: var(--gold); box-shadow: 0 0 20px rgba(245,166,35,0.35);
+    }
+
+    .step.done .step-circle {
+      border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,0.08);
+    }
+
+    .step-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); transition: color 0.35s;
+    }
+
+    .step.active .step-label { color: var(--gold); }
+    .step.done .step-label { color: var(--amber); }
+
+    .step-line {
+      flex: 1; height: 1px; min-width: 60px; max-width: 120px;
+      background: linear-gradient(to right, rgba(245,166,35,0.15), rgba(245,166,35,0.15));
+      margin: 0 0.5rem; margin-bottom: 1.5rem;
+      transition: background 0.35s;
+    }
+
+    .step-line.done { background: linear-gradient(to right, var(--amber), rgba(232,130,12,0.3)); }
+
+    /* STEP PANELS */
+    .reg-step { animation: stepIn 0.35s ease; }
+    .reg-step.hidden { display: none; }
+
+    @keyframes stepIn {
+      from { opacity: 0; transform: translateX(18px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .step-header {
+      display: flex; gap: 2rem; align-items: flex-start; margin-bottom: 2.5rem;
+    }
+
+    .step-num-big {
+      font-family: 'Bebas Neue', sans-serif; font-size: 5rem;
+      color: rgba(245,166,35,0.1); line-height: 1; flex-shrink: 0;
+      user-select: none;
+    }
+
+    .step-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 4vw, 3.5rem);
+      color: var(--foam); line-height: 1; margin-bottom: 0.5rem;
+    }
+
+    .step-desc { font-size: 0.95rem; color: var(--muted); line-height: 1.6; max-width: 500px; }
+
+    .step-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+      flex-wrap: wrap; gap: 1rem;
+    }
+
+    .step-info { font-size: 0.8rem; color: var(--muted); letter-spacing: 1px; }
+
+    /* TICKET CARDS */
+    .ticket-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2.5rem;
+    }
+
+    .ticket-card {
+      border: 1px solid var(--border); padding: 2rem 1.5rem;
+      text-align: center; cursor: pointer; position: relative; overflow: hidden;
+      transition: all 0.25s; background: rgba(245,166,35,0.01);
+    }
+
+    .ticket-card:hover { border-color: rgba(245,166,35,0.35); transform: translateY(-3px); }
+
+    .ticket-card.selected {
+      border-color: var(--gold);
+      background: rgba(245,166,35,0.06);
+      box-shadow: 0 0 30px rgba(245,166,35,0.1);
+    }
+
+    .ticket-card.selected::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--gold);
+    }
+
+    .ticket-badge {
+      position: absolute; top: 0.8rem; right: 0.8rem;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.62rem;
+      letter-spacing: 2px; text-transform: uppercase;
+      background: var(--gold); color: var(--dark);
+      padding: 0.2rem 0.6rem;
+    }
+
+    .ticket-icon { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+    .ticket-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--foam); margin-bottom: 0.5rem; }
+    .ticket-price { display: flex; align-items: baseline; gap: 0.3rem; justify-content: center; }
+    .ticket-price span { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gold); line-height: 1; }
+    .ticket-per { font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; color: var(--muted); letter-spacing: 2px; margin-bottom: 1.2rem; }
+
+    .ticket-features {
+      list-style: none; text-align: left; display: flex; flex-direction: column; gap: 0.4rem;
+    }
+
+    .ticket-features li { font-size: 0.88rem; color: var(--muted); }
+    .ticket-features li:first-child { color: var(--text); }
+
+    /* QUANTITY */
+    .quantity-block {
+      border: 1px solid var(--border); padding: 1.5rem 2rem;
+      background: rgba(245,166,35,0.02); margin-bottom: 1rem;
+    }
+
+    .qty-label-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.2rem; flex-wrap: wrap; gap: 0.5rem;
+    }
+
+    .qty-note { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+
+    .qty-row { display: flex; align-items: center; gap: 1.2rem; }
+
+    .qty-btn {
+      width: 44px; height: 44px; border: 1px solid rgba(245,166,35,0.3);
+      background: transparent; color: var(--gold); font-size: 1.4rem;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+    }
+
+    .qty-btn:hover { background: rgba(245,166,35,0.1); border-color: var(--gold); }
+
+    .qty-display {
+      font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gold);
+      min-width: 48px; text-align: center; line-height: 1;
+    }
+
+    .qty-total-block { margin-left: auto; text-align: right; }
+    .qty-total-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); display: block; }
+    .qty-total-price { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--gold); }
+
+    /* SUMMARY BOX */
+    .summary-box {
+      border: 1px solid var(--border); padding: 2rem;
+      background: rgba(245,166,35,0.02); margin-bottom: 2rem;
+    }
+
+    .summary-title {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem;
+      letter-spacing: 4px; text-transform: uppercase; color: var(--amber);
+      margin-bottom: 1.2rem;
+    }
+
+    .summary-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.7rem 0; border-bottom: 1px solid rgba(245,166,35,0.06);
+    }
+
+    .summary-row.total { border-bottom: none; padding-top: 1rem; }
+    .summary-lbl { font-size: 0.9rem; color: var(--muted); }
+    .summary-val { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; color: var(--foam); }
+    .summary-val.gold { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--gold); }
+    .summary-divider { height: 1px; background: rgba(245,166,35,0.15); margin: 0.5rem 0; }
+
+    /* PAYMENT METHODS */
+    .pay-methods { margin-bottom: 2rem; }
+    .pay-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; letter-spacing: 4px; text-transform: uppercase; color: var(--amber); margin-bottom: 1rem; }
+
+    .pay-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+
+    .pay-option {
+      border: 1px solid var(--border); padding: 1.4rem 1.2rem; cursor: pointer;
+      text-align: center; transition: all 0.2s; background: rgba(245,166,35,0.01);
+    }
+
+    .pay-option:hover { border-color: rgba(245,166,35,0.3); }
+
+    .pay-option.selected {
+      border-color: var(--gold); background: rgba(245,166,35,0.06);
+    }
+
+    .pay-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    .pay-name { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; color: var(--foam); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.2rem; }
+    .pay-sub { font-size: 0.8rem; color: var(--muted); }
+
+    /* TYPE SELECTOR */
+    .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 700px; margin-bottom: 2rem; }
+
+    .type-card {
+      border: 1px solid var(--border); padding: 2.2rem 2rem;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: all 0.25s; background: rgba(245,166,35,0.01);
+    }
+
+    .type-card:hover { border-color: rgba(245,166,35,0.35); transform: translateY(-2px); }
+
+    .type-card.selected {
+      border-color: var(--gold); background: rgba(245,166,35,0.06);
+      box-shadow: 0 0 28px rgba(245,166,35,0.1);
+    }
+
+    .type-card.selected::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gold); }
+
+    .type-check {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--gold); color: var(--dark);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700;
+    }
+
+    .type-check.hidden { display: none; }
+
+    .type-icon { font-size: 2.8rem; display: block; margin-bottom: 0.8rem; }
+    .type-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--foam); margin-bottom: 0.3rem; }
+    .type-price { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--gold); margin-bottom: 1rem; }
+    .type-price span { font-size: 0.85rem; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 2px; }
+    .type-features { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+    .type-features li { font-size: 0.9rem; color: var(--muted); }
+    .type-features li:first-child { color: var(--text); }
+
+    /* GATEWAY PLACEHOLDER */
+    .gateway-placeholder {
+      border: 1px dashed rgba(245,166,35,0.3);
+      background: rgba(245,166,35,0.02);
+      overflow: hidden;
+    }
+
+    .gateway-header {
+      display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem;
+      background: rgba(245,166,35,0.05); border-bottom: 1px solid rgba(245,166,35,0.1);
+      flex-wrap: wrap;
+    }
+
+    .gateway-lock { font-size: 1.1rem; }
+
+    .gateway-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+      letter-spacing: 3px; color: var(--gold);
+    }
+
+    .gateway-logos {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem;
+      letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-left: auto;
+    }
+
+    .gateway-body { padding: 1.8rem; display: flex; flex-direction: column; gap: 1.2rem; }
+
+    .gateway-slot { display: flex; flex-direction: column; gap: 0.4rem; }
+    .gateway-slot-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; letter-spacing: 3px; text-transform: uppercase; color: var(--amber); }
+    .gateway-slot-field {
+      background: rgba(245,166,35,0.03); border: 1px solid rgba(245,166,35,0.12);
+      padding: 0.9rem 1.2rem; display: flex; justify-content: space-between; align-items: center;
+      cursor: not-allowed;
+    }
+
+    .gateway-notice {
+      display: flex; gap: 0.8rem; align-items: flex-start;
+      padding: 0.9rem 1.2rem; background: rgba(245,166,35,0.05);
+      border: 1px solid rgba(245,166,35,0.15); font-size: 0.82rem; color: var(--muted); line-height: 1.6;
+    }
+
+    .gateway-stripe-badge {
+      display: inline-block; font-size: 0.78rem; color: var(--muted);
+      border: 1px solid var(--border); padding: 0.4rem 1rem;
+      font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;
+    }
+
+    /* TRANSFER INFO */
+    .transfer-info { border: 1px solid var(--border); padding: 2rem; background: rgba(245,166,35,0.02); }
+    .transfer-box { display: flex; flex-direction: column; gap: 0.8rem; }
+    .transfer-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(245,166,35,0.06); font-size: 0.95rem; }
+    .transfer-row span { color: var(--muted); }
+    .transfer-row strong { color: var(--gold); font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; letter-spacing: 1px; }
+
+    /* SUCCESS */
+    .success-wrap { text-align: center; padding: 3rem 0 4rem; }
+    .success-icon { font-size: 5rem; margin-bottom: 1.5rem; display: block; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+    .success-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 7vw, 6rem); color: var(--gold); margin-bottom: 0.8rem; line-height: 1; }
+    .success-sub { font-size: 1.05rem; color: var(--muted); max-width: 480px; margin: 0 auto 3rem; line-height: 1.7; }
+
+    @keyframes popIn {
+      from { transform: scale(0.5); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* TICKET PREVIEW */
+    .ticket-preview {
+      max-width: 480px; margin: 0 auto;
+      border: 1px solid rgba(245,166,35,0.3);
+      background: rgba(245,166,35,0.04);
+      overflow: hidden;
+    }
+
+    .ticket-preview-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 1.5rem;
+      background: rgba(245,166,35,0.08);
+      border-bottom: 1px dashed rgba(245,166,35,0.2);
+    }
+
+    .ticket-preview-body { padding: 1.2rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .tp-row { display: flex; justify-content: space-between; font-size: 0.9rem; }
+    .tp-lbl { color: var(--muted); }
+    .tp-val { color: var(--foam); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.5px; }
+
+    .ticket-preview-qr {
+      border-top: 1px dashed rgba(245,166,35,0.2); padding: 1.2rem 1.5rem;
+      display: flex; align-items: center; gap: 1.2rem;
+    }
+
+    .qr-placeholder {
+      width: 70px; height: 70px; flex-shrink: 0;
+      background: var(--foam); padding: 4px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .qr-inner {
+      width: 62px; height: 62px;
+      background: repeating-conic-gradient(#000 0% 25%, #fff 0% 50%) 0 0 / 8px 8px;
+    }
+
+    /* PRICE BADGE (shared) */
+    .price-badge {
+      display: inline-flex; align-items: baseline; gap: 0.3rem;
+      background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.2);
+      padding: 1.2rem 2rem;
+    }
+
+    .price-n { font-family: 'Bebas Neue', sans-serif; font-size: 3rem; color: var(--gold); line-height: 1; }
+    .price-c { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; color: var(--amber); letter-spacing: 2px; }
+    .price-s { font-size: 0.8rem; color: var(--muted); margin-left: 0.5rem; }
+
+    /* REG FORM GRID */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 3rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-family: 'Barlow Condensed', sans-serif; font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--amber); }
+    .form-input { background: rgba(245,166,35,0.04); border: 1px solid var(--border); padding: 0.85rem 1.2rem; color: var(--foam); font-family: 'Barlow', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s; width: 100%; }
+    .form-input::placeholder { color: var(--muted); }
+    .form-input:focus { border-color: rgba(245,166,35,0.5); }
+
+    /* PAY LOADING */
+    .pay-btn { min-width: 220px; position: relative; }
+
+    .spinner {
+      display: none; width: 18px; height: 18px;
+      border: 2px solid rgba(10,10,10,0.3);
+      border-top-color: var(--dark);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* RESPONSIVE */
+    @media (max-width: 760px) {
+      .ticket-grid { grid-template-columns: 1fr; }
+      .pay-grid { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .stepper { gap: 0; }
+      .step-line { min-width: 24px; }
+      .step-label { font-size: 0.6rem; }
+      .step-footer { flex-direction: column-reverse; }
+    }
+
+    @media print {
+      nav, .page-header, .stepper, #reg-step-1, #reg-step-2, #reg-step-3, footer { display: none !important; }
+      .ticket-preview { border: 2px solid #000; max-width: 100%; }
+    }
+  
+    /* REG TOGGLE */
+    .reg-toggle-wrap {
+      display: flex; gap: 0; margin-bottom: 2.5rem;
+      border: 1px solid var(--border); overflow: hidden;
+      max-width: 420px;
+    }
+
+    .reg-toggle {
+      flex: 1; padding: 0.95rem 1.5rem; border: none; cursor: pointer;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      font-size: 1rem; letter-spacing: 2px; text-transform: uppercase;
+      background: transparent; color: var(--muted);
+      transition: all 0.2s; position: relative;
+    }
+
+    .reg-toggle.active {
+      background: var(--gold); color: var(--dark);
+    }
+
+    .reg-toggle:not(.active):hover { background: rgba(245,166,35,0.08); color: var(--text); }
+
+    /* GATEWAY LIVE PANEL */
+    .gateway-live {
+      border: 1px solid rgba(245,166,35,0.3);
+      background: rgba(245,166,35,0.03);
+      overflow: hidden;
+    }
+
+    .gateway-live-header {
+      display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem;
+      background: rgba(245,166,35,0.07); border-bottom: 1px solid rgba(245,166,35,0.15);
+      flex-wrap: wrap;
+    }
+
+    .gateway-live-body {
+      padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    .gateway-live-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.9rem 1.2rem; border: 1px solid rgba(245,166,35,0.1);
+      background: rgba(245,166,35,0.02);
+    }
+
+    .gateway-live-icon { font-size: 1.5rem; flex-shrink: 0; }
+
+    .gateway-live-label {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem;
+      letter-spacing: 3px; text-transform: uppercase; color: var(--amber); margin-bottom: 0.2rem;
+    }
+
+    .gateway-live-val {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem;
+      font-weight: 700; color: var(--foam); letter-spacing: 0.5px;
+    }
+
+    .gateway-live-val.gold { color: var(--gold); font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; }
+
+    .gateway-live-notice {
+      font-size: 0.82rem; color: var(--muted); line-height: 1.6;
+      padding: 0.8rem 1rem; border: 1px solid rgba(245,166,35,0.1);
+      background: rgba(245,166,35,0.02);
+    }
+
+    .gateway-live-notice strong { color: var(--text); }
+      text-align: center; padding: 2.5rem 1rem;
+      border: 2px dashed rgba(245,166,35,0.2);
+      display: flex; flex-direction: column; align-items: center; gap: 0.7rem;
+    }
+
+    .gateway-embed-icon { font-size: 3rem; opacity: 0.4; }
+    .gateway-embed-text { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--muted); letter-spacing: 2px; }
+    .gateway-embed-sub  { font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; letter-spacing: 2px; color: var(--muted); opacity: 0.7; text-transform: uppercase; }
+
+    .gateway-embed-code {
+      margin-top: 0.5rem; padding: 0.7rem 1.2rem;
+      background: rgba(245,166,35,0.04); border: 1px solid var(--border);
+      font-size: 0.78rem; color: var(--amber); font-family: monospace; letter-spacing: 0.5px;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="goTo('home')">DrinkMaster</div>
+  <ul class="nav-links">
+    <li><a href="#" class="active" data-page="home">Domů</a></li>
+    <li><a href="#" data-page="web">O webu</a></li>
+    <li><a href="#" data-page="vyzvy">Výzvy</a></li>
+    <li><a href="#" data-page="program">Program</a></li>
+    <li><a href="#" data-page="registrace">Registrace</a></li>
+  </ul>
+</nav>
+
+<!-- ==================== HOME ==================== -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-badge">🏆 Školní soutěžní akce roku 2026</div>
+    <h1 class="hero-title">
+      DRINK<br>MASTER
+      <span class="outline">CHALLENGE</span>
+    </h1>
+    <p class="hero-authors">Ronovský · Novotný · Urban</p>
+    <p class="hero-sub">Týmové výzvy · Hudba · Moderátor · Hlasování publika</p>
+    <div class="hero-cta">
+      <a href="#" class="btn-gold" onclick="goTo('registrace'); return false;">Přihlásit tým</a>
+      <a href="#" class="btn-ghost" onclick="goTo('vyzvy'); return false;">Zobrazit výzvy</a>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item"><div class="stat-num">8</div><div class="stat-lbl">Týmů v soutěži</div></div>
+    <div class="stat-item"><div class="stat-num">6</div><div class="stat-lbl">Typů výzev</div></div>
+    <div class="stat-item"><div class="stat-num">16+</div><div class="stat-lbl">Věková hranice</div></div>
+    <div class="stat-item"><div class="stat-num">200</div><div class="stat-lbl">Kč vstupné</div></div>
+  </div>
+
+  <!-- INFO + COUNTDOWN -->
+  <div class="ic-wrap">
+    <div>
+      <p class="section-label">Základní informace</p>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,5vw,4rem);color:var(--foam);margin-bottom:1.8rem;line-height:1;">Kdy &amp; kde?</h2>
+      <div class="info-cards">
+        <div class="info-card"><div class="info-icon">🎭</div><div><div class="info-lbl">Typ akce</div><div class="info-val">Soutěžní společenský event <span>(16+)</span></div></div></div>
+        <div class="info-card"><div class="info-icon">📅</div><div><div class="info-lbl">Datum</div><div class="info-val"><span>15. července 2026</span></div></div></div>
+        <div class="info-card"><div class="info-icon">📍</div><div><div class="info-lbl">Místo konání</div><div class="info-val">Anonymous Bar <span>Praha</span></div></div></div>
+        <div class="info-card"><div class="info-icon">🎟️</div><div><div class="info-lbl">Vstupní cena</div><div class="info-val"><span>200 Kč</span> / osoba</div></div></div>
+      </div>
+    </div>
+    <div class="cd-block">
+      <p class="cd-label">⏳ Odpočet do zahájení</p>
+      <div class="cd-grid" id="cd-grid">
+        <div><div class="cd-box"><span class="cd-num" id="cd-d">--</span></div><span class="cd-sep">Dní</span></div>
+        <div><div class="cd-box"><span class="cd-num" id="cd-h">--</span></div><span class="cd-sep">Hodin</span></div>
+        <div><div class="cd-box"><span class="cd-num" id="cd-m">--</span></div><span class="cd-sep">Minut</span></div>
+        <div><div class="cd-box"><span class="cd-num" id="cd-s">--</span></div><span class="cd-sep">Sekund</span></div>
+      </div>
+      <span class="cd-tag">DrinkMaster Challenge · 15. 7. 2026</span>
+    </div>
+  </div>
+
+  <!-- O AKCI -->
+  <div class="about-strip">
+    <div>
+      <p class="section-label">O akci</p>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,5vw,4.5rem);color:var(--foam);line-height:1;margin-bottom:1.5rem;">Víc než<br>jen drink</h2>
+      <p class="about-desc" style="margin-bottom:1.2rem;">
+        DrinkMaster Challenge je zábavná soutěžní akce, kde se týmy utkají v různých pivních a drinkových výzvách. Nejde jen o to, kdo <strong>„vypije víc"</strong> — jde o rychlost, týmovou spolupráci a zvládnutí tematických úkolů.
+      </p>
+      <p class="about-desc" style="margin-bottom:2rem;">
+        Součástí večera je <strong>hudba, moderátor, doprovodný program</strong> a hlasování publika.
+      </p>
+      <a href="#" class="btn-gold" onclick="goTo('registrace'); return false;">Přihlásit tým →</a>
+    </div>
+    <div class="about-visual">
+      <div class="about-card"><span class="about-card-icon">🍺</span><div class="about-card-title">Týmový duch</div><div class="about-card-text">Každý člen týmu má svoji roli. Spolupráce je klíčem k vítězství.</div></div>
+      <div class="about-card"><span class="about-card-icon">🎯</span><div class="about-card-title">Tematické úkoly</div><div class="about-card-text">Soutěžíš nejen rychlostí, ale i kreativitou a znalostmi.</div></div>
+      <div class="about-card"><span class="about-card-icon">🎵</span><div class="about-card-title">Živá hudba</div><div class="about-card-text">Celý večer doprovází skvělá hudba a profesionální moderátor.</div></div>
+      <div class="about-card"><span class="about-card-icon">🗳️</span><div class="about-card-title">Hlasování publika</div><div class="about-card-text">Diváci mají slovo — jejich hlasy mohou otočit celé pořadí.</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">DrinkMaster Challenge</div>
+    <div class="footer-text">Ronovský · Novotný · Urban · 2026</div>
+    <div class="footer-links">
+      <a href="#" onclick="goTo('registrace'); return false;">Registrace</a>
+      <a href="#">Instagram</a>
+      <a href="#">Kontakt</a>
+    </div>
+  </footer>
+</div>
+
+<!-- ==================== O WEBU ==================== -->
+<div class="page" id="page-web">
+  <div class="page-inner">
+    <div class="page-header">
+      <div><p class="section-label">Projekt</p><h1 class="page-title">O webu</h1></div>
+      <p style="color:var(--muted);font-size:0.9rem;max-width:280px;text-align:right;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">Ronovský · Novotný · Urban</p>
+    </div>
+
+    <!-- K čemu web slouží -->
+    <div class="web-grid" style="margin-bottom:3rem;">
+      <div class="web-block">
+        <span class="web-block-icon">🌐</span>
+        <div class="web-block-title">K čemu web slouží?</div>
+        <ul class="web-list">
+          <li>Informace o akci <strong>(program, pravidla, harmonogram)</strong></li>
+          <li>Online <strong>registrace týmů</strong></li>
+          <li><strong>Prodej vstupenek</strong> přes internet</li>
+          <li>Přehled <strong>výsledků</strong> po skončení soutěže</li>
+          <li><strong>Fotogalerie</strong> a video záznam</li>
+          <li>Mapa <strong>místa konání</strong></li>
+          <li><strong>FAQ sekce</strong> pro časté dotazy</li>
+        </ul>
+      </div>
+      <div class="web-block">
+        <span class="web-block-icon">👥</span>
+        <div class="web-block-title">Pro koho je web?</div>
+        <div class="audience-grid" style="margin-top:0;">
+          <div class="audience-card">
+            <span class="audience-card-icon">🏆</span>
+            <div class="audience-card-name">Soutěžící</div>
+            <div class="audience-card-sub">16+ · Registrace týmů</div>
+          </div>
+          <div class="audience-card">
+            <span class="audience-card-icon">👀</span>
+            <div class="audience-card-name">Diváci</div>
+            <div class="audience-card-sub">Vstupenky · Program</div>
+          </div>
+          <div class="audience-card">
+            <span class="audience-card-icon">🤝</span>
+            <div class="audience-card-name">Sponzoři</div>
+            <div class="audience-card-sub">Partnerství · Média</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tech stack -->
+    <p class="section-label" style="margin-bottom:1.5rem;">Použité technologie</p>
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-cat">Web &amp; Vývoj</div>
+        <span class="tech-icon">💻</span>
+        <div class="tech-name">HTML · CSS · JS</div>
+        <div class="tech-desc">Tvorba webu — základ celého projektu. React pro moderní a dynamické uživatelské rozhraní.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-cat">Backend &amp; Platby</div>
+        <span class="tech-icon">🔥</span>
+        <div class="tech-name">Firebase + Stripe</div>
+        <div class="tech-desc">Firebase pro databázi registrací a správu uživatelů. Stripe pro bezpečné online platby za vstupenky.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-cat">Design</div>
+        <span class="tech-icon">🎨</span>
+        <div class="tech-name">Figma + Canva</div>
+        <div class="tech-desc">Figma pro návrh designu webu. Canva pro tvorbu plakátů, bannerů a marketingových materiálů.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-cat">AI nástroje</div>
+        <span class="tech-icon">🤖</span>
+        <div class="tech-name">ChatGPT + Claude</div>
+        <div class="tech-desc">Tvorba textů, pravidel soutěže a marketingových popisků. Rychlá a efektivní tvorba obsahu.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-cat">AI generování grafiky</div>
+        <span class="tech-icon">🖼️</span>
+        <div class="tech-name">DALL·E / Midjourney</div>
+        <div class="tech-desc">Generování grafiky a vizuálů pro web a sociální sítě. Profesionální výsledek s malým týmem.</div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-cat">Video</div>
+        <span class="tech-icon">🎬</span>
+        <div class="tech-name">Runway</div>
+        <div class="tech-desc">Tvorba promo videí a animací. Nástroje se snadno propojují a umožňují profesionální výstup.</div>
+      </div>
+    </div>
+
+    <!-- Proč tyto nástroje -->
+    <div style="margin-top:3rem;padding:2.5rem;border:1px solid var(--border);background:rgba(245,166,35,0.02);">
+      <p class="section-label" style="margin-bottom:1rem;">Proč právě tyto nástroje?</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;" class="why-grid">
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="color:var(--gold);font-size:1.3rem;flex-shrink:0;">⚡</span>
+          <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--foam);font-size:1rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.3rem;">Rychlé a efektivní</div><div style="font-size:0.88rem;color:var(--muted);line-height:1.6;">Šetří čas při tvorbě obsahu a umožňují soustředit se na kvalitu.</div></div>
+        </div>
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="color:var(--gold);font-size:1.3rem;flex-shrink:0;">🏆</span>
+          <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--foam);font-size:1rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.3rem;">Profesionální výsledek</div><div style="font-size:0.88rem;color:var(--muted);line-height:1.6;">Profesionální výstup i s malým týmem tří lidí.</div></div>
+        </div>
+        <div style="display:flex;gap:0.8rem;align-items:flex-start;">
+          <span style="color:var(--gold);font-size:1.3rem;flex-shrink:0;">🔗</span>
+          <div><div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--foam);font-size:1rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.3rem;">Propojené nástroje</div><div style="font-size:0.88rem;color:var(--muted);line-height:1.6;">Snadno se propojují a tvoří jeden plynulý pracovní postup.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-logo">DrinkMaster Challenge</div>
+    <div class="footer-text">Ronovský · Novotný · Urban · 2026</div>
+    <div class="footer-links"><a href="#" onclick="goTo('registrace'); return false;">Registrace</a><a href="#">Instagram</a></div>
+  </footer>
+</div>
+
+<!-- ==================== VÝZVY ==================== -->
+<div class="page" id="page-vyzvy">
+  <div class="page-inner">
+    <div class="page-header">
+      <div><p class="section-label">Co vás čeká</p><h1 class="page-title">Typy výzev</h1></div>
+      <p style="color:var(--muted);font-size:0.95rem;max-width:280px;text-align:right;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;">Každá výzva boduje jinak.<br>Strategie je klíčová.</p>
+    </div>
+    <div class="ch-grid">
+      <div class="ch-item"><div class="ch-n">01</div><span class="ch-ic">⚡</span><div class="ch-t">Speed Round</div><div class="ch-d">Kdo to zvládne nejrychleji? Časomíra tikotá — žádný prostor pro chyby. Celý tým musí dokončit úkol najednou.</div><span class="ch-pts">⭐ 20 bodů</span></div>
+      <div class="ch-item"><div class="ch-n">02</div><span class="ch-ic">🧩</span><div class="ch-t">Tematické úkoly</div><div class="ch-d">Kreativita, znalosti a týmová práce se spojí v jedinečných výzvách s tématem. Každé kolo jiné téma.</div><span class="ch-pts">⭐ 25 bodů</span></div>
+      <div class="ch-item"><div class="ch-n">03</div><span class="ch-ic">🗳️</span><div class="ch-t">Hlasování publika</div><div class="ch-d">Publikum rozhoduje! Získej sympatie fanoušků a nasbírej bonusové body. Diváci hlasují SMS nebo QR kódem.</div><span class="ch-pts">⭐ 15 bodů</span></div>
+      <div class="ch-item"><div class="ch-n">04</div><span class="ch-ic">🍻</span><div class="ch-t">Pivní výzva</div><div class="ch-d">Klasická disciplína pro silné žaludky. Rychlost a koordinace celého týmu rozhoduje o vítězi.</div><span class="ch-pts">⭐ 20 bodů</span></div>
+      <div class="ch-item"><div class="ch-n">05</div><span class="ch-ic">🍹</span><div class="ch-t">Drinková tvořivost</div><div class="ch-d">Vytvořte nejlepší drink pod časovým tlakem. Porota ochutnává a hodnotí chuť, prezentaci i originalitu.</div><span class="ch-pts">⭐ 30 bodů</span></div>
+      <div class="ch-item"><div class="ch-n">06</div><span class="ch-ic">🎤</span><div class="ch-t">Moderátorská výzva</div><div class="ch-d">Moderátor hodí speciální kolo — tady neví nikdo dopředu, co přijde! Bonus za odvahu a humor.</div><span class="ch-pts">⭐ 10 + bonus</span></div>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-logo">DrinkMaster Challenge</div>
+    <div class="footer-text">Ronovský · Novotný · Urban · 2026</div>
+    <div class="footer-links"><a href="#" onclick="goTo('registrace'); return false;">Registrace</a><a href="#">Instagram</a></div>
+  </footer>
+</div>
+
+<!-- ==================== PROGRAM ==================== -->
+<div class="page" id="page-program">
+  <div class="page-inner">
+    <div class="page-header">
+      <div><p class="section-label">Večerní harmonogram</p><h1 class="page-title">Program akce</h1></div>
+      <div style="text-align:right;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);">15. ČERVENCE 2026</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;letter-spacing:3px;color:var(--muted);text-transform:uppercase;">Anonymous Bar Praha</div>
+      </div>
+    </div>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-time">18:00</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Příchod a registrace týmů</div><div class="tl-note">Check-in, losování startovních pozic, přivítání u baru</div></div><div class="tl-em">🚪</div></div>
+      <div class="tl-item"><div class="tl-time">18:30</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Zahájení a představení týmů</div><div class="tl-note">Moderátor uvítá hosty, slavnostní představení všech soutěžních týmů</div></div><div class="tl-em">🎤</div></div>
+      <div class="tl-item"><div class="tl-time">19:00</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">1. kolo výzev</div><div class="tl-note">Speed Round + Pivní výzva — první body jsou na stole</div></div><div class="tl-em">⚡</div></div>
+      <div class="tl-item"><div class="tl-time">19:45</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Tematické úkoly — kolo 1</div><div class="tl-note">Kreativní výzva s tajným tématem, které týmy odhalí až na místě</div></div><div class="tl-em">🧩</div></div>
+      <div class="tl-item"><div class="tl-time">20:30</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Hudební přestávka</div><div class="tl-note">Živá hudba, doprovodný program, průběžné výsledky na plátně</div></div><div class="tl-em">🎵</div></div>
+      <div class="tl-item"><div class="tl-time">21:00</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Drinková tvořivost</div><div class="tl-note">Týmy míchají drinky pod časovým tlakem, porota ochutnává a hodnotí</div></div><div class="tl-em">🍹</div></div>
+      <div class="tl-item"><div class="tl-time">21:45</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Hlasování publika</div><div class="tl-note">Diváci volí svého favorita — bonusové body mohou otočit pořadí</div></div><div class="tl-em">🗳️</div></div>
+      <div class="tl-item"><div class="tl-time">22:15</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Moderátorská výzva + Velké finále</div><div class="tl-note">Tajná výzva od moderátora, vyhlášení výsledků a předání trofeje</div></div><div class="tl-em">🏆</div></div>
+      <div class="tl-item"><div class="tl-time">22:45</div><div class="tl-dot"></div><div class="tl-content"><div class="tl-title">Afterparty</div><div class="tl-note">Volná zábava, hudba do noci a oslava vítězů</div></div><div class="tl-em">🎉</div></div>
+    </div>
+  </div>
+  <footer>
+    <div class="footer-logo">DrinkMaster Challenge</div>
+    <div class="footer-text">Ronovský · Novotný · Urban · 2026</div>
+    <div class="footer-links"><a href="#" onclick="goTo('registrace'); return false;">Registrace</a><a href="#">Instagram</a></div>
+  </footer>
+</div>
+
+<!-- ==================== REGISTRACE ====================  -->
+<div class="page" id="page-registrace">
+  <div class="page-inner">
+
+    <div class="page-header">
+      <div><p class="section-label">Přihlášení &amp; Vstupenky</p><h1 class="page-title">Registrace</h1></div>
+      <div class="price-badge"><span class="price-n">200</span><span class="price-c">Kč</span><span class="price-s">/ soutěžící &nbsp;·&nbsp; 100 Kč divák</span></div>
+    </div>
+
+    <!-- PŘEPÍNAČ TÝM / DIVÁK -->
+    <div class="reg-toggle-wrap">
+      <button class="reg-toggle active" id="toggle-tym" onclick="switchMode('tym')">🏆 Soutěžní tým</button>
+      <button class="reg-toggle" id="toggle-divak" onclick="switchMode('divak')">👀 Divák</button>
+    </div>
+
+    <!-- STEPPER (4 kroky) -->
+    <div class="stepper">
+      <div class="step active" id="step-ind-1"><div class="step-circle">1</div><div class="step-label">Údaje</div></div>
+      <div class="step-line" id="sline-1"></div>
+      <div class="step" id="step-ind-2"><div class="step-circle">2</div><div class="step-label">Vstupenky</div></div>
+      <div class="step-line" id="sline-2"></div>
+      <div class="step" id="step-ind-3"><div class="step-circle">3</div><div class="step-label">Platba</div></div>
+      <div class="step-line" id="sline-3"></div>
+      <div class="step" id="step-ind-4"><div class="step-circle">✓</div><div class="step-label">Hotovo</div></div>
+    </div>
+
+    <!-- ── KROK 1: ÚDAJE ── -->
+    <div class="reg-step" id="reg-step-1">
+      <div class="step-header">
+        <div class="step-num-big">01</div>
+        <div>
+          <h2 class="step-title" id="step1-title">Údaje týmu</h2>
+          <p class="step-desc" id="step1-desc">Zadej název týmu, kontaktní e-mail a jméno každého ze čtyř členů.</p>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:1.5rem;">
+        <div class="form-group">
+          <label class="form-label" id="lbl-name">Název týmu</label>
+          <input type="text" class="form-input" id="f-name" placeholder="např. Pivní lvi...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kontaktní e-mail</label>
+          <input type="email" class="form-input" id="f-email" placeholder="vas@email.cz">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Telefon <span style="opacity:.6;font-size:.85em;">(nepovinné)</span></label>
+          <input type="tel" class="form-input" id="f-phone" placeholder="+420 123 456 789">
+        </div>
+      </div>
+
+      <!-- Členové — jen pro tým, pro diváka skryto -->
+      <div id="members-block">
+        <div style="border-top:1px solid var(--border);padding-top:1.5rem;">
+          <p class="section-label" style="margin-bottom:1.2rem;">Členové týmu</p>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Člen 1 — Kapitán</label><input type="text" class="form-input member-input" id="f-m1" placeholder="Jméno a příjmení"></div>
+            <div class="form-group"><label class="form-label">Člen 2</label><input type="text" class="form-input member-input" id="f-m2" placeholder="Jméno a příjmení"></div>
+            <div class="form-group"><label class="form-label">Člen 3</label><input type="text" class="form-input member-input" id="f-m3" placeholder="Jméno a příjmení"></div>
+            <div class="form-group"><label class="form-label">Člen 4</label><input type="text" class="form-input member-input" id="f-m4" placeholder="Jméno a příjmení"></div>
+            <div class="form-group"><label class="form-label">Třída <span style="opacity:.6;font-size:.85em;">(nepovinné)</span></label><input type="text" class="form-input" id="f-class" placeholder="např. 3.A"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-footer">
+        <span class="step-info">16+ · Anonymous Bar Praha · 15. 7. 2026</span>
+        <button class="btn-gold" onclick="goStep(2)">Pokračovat → Vstupenky</button>
+      </div>
+    </div>
+
+    <!-- ── KROK 2: VSTUPENKY ── -->
+    <div class="reg-step hidden" id="reg-step-2">
+      <div class="step-header">
+        <div class="step-num-big">02</div>
+        <div>
+          <h2 class="step-title">Vstupenky</h2>
+          <p class="step-desc">Vyber typ vstupenky a počet.</p>
+        </div>
+      </div>
+
+      <div class="ticket-grid" style="margin-bottom:1.5rem;">
+        <div class="ticket-card selected" id="tkt-standard" onclick="selectTicket('standard')">
+          <div class="ticket-badge" id="tkt-rec-badge">Doporučeno</div>
+          <span class="ticket-icon" id="tkt-standard-icon">🏆</span>
+          <div class="ticket-name" id="tkt-standard-name">Soutěžní vstupenka</div>
+          <div class="ticket-price"><span id="tkt-standard-price">200</span> Kč</div>
+          <div class="ticket-per">/ osoba</div>
+          <ul class="ticket-features" id="tkt-standard-features">
+            <li>✓ Účast v soutěži</li>
+            <li>✓ Vstup na akci</li>
+            <li>✓ Doprovodný program</li>
+            <li>✓ Hlasování publika</li>
+          </ul>
+        </div>
+        <div class="ticket-card" id="tkt-vip" onclick="selectTicket('vip')">
+          <span class="ticket-icon">⭐</span>
+          <div class="ticket-name">VIP vstupenka</div>
+          <div class="ticket-price"><span>350</span> Kč</div>
+          <div class="ticket-per">/ osoba</div>
+          <ul class="ticket-features">
+            <li>✓ Vstup + VIP zóna</li>
+            <li>✓ 1× nápoj zdarma</li>
+            <li>✓ Prioritní místo u pódia</li>
+            <li>✓ Hlasování publika</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="quantity-block">
+        <div class="qty-label-row">
+          <span class="form-label">Počet vstupenek</span>
+          <span class="qty-note" id="qty-hint">Tým = 4 osoby → doporučujeme 4 vstupenky</span>
+        </div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <div class="qty-display" id="qty-display">4</div>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+          <div class="qty-total-block">
+            <span class="qty-total-label">Celkem</span>
+            <span class="qty-total-price" id="qty-total">800 Kč</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step-footer">
+        <button class="btn-ghost" onclick="goStep(1)">← Zpět</button>
+        <button class="btn-gold" onclick="goStep(3)">Pokračovat → Platba</button>
+      </div>
+    </div>
+
+    <!-- ── KROK 3: PLATBA ── -->
+    <div class="reg-step hidden" id="reg-step-3">
+      <div class="step-header">
+        <div class="step-num-big">03</div>
+        <div>
+          <h2 class="step-title">Platba</h2>
+          <p class="step-desc">Zkontroluj objednávku a vyber způsob platby.</p>
+        </div>
+      </div>
+
+      <!-- Shrnutí -->
+      <div class="summary-box">
+        <div class="summary-title">Shrnutí objednávky</div>
+        <div class="summary-row"><span class="summary-lbl" id="sum-name-lbl">Tým</span><span class="summary-val" id="sum-name">—</span></div>
+        <div class="summary-row"><span class="summary-lbl">E-mail</span><span class="summary-val" id="sum-email">—</span></div>
+        <div class="summary-row"><span class="summary-lbl">Typ vstupenky</span><span class="summary-val" id="sum-ticket">—</span></div>
+        <div class="summary-row"><span class="summary-lbl">Počet</span><span class="summary-val" id="sum-qty">—</span></div>
+        <div class="summary-divider"></div>
+        <div class="summary-row total"><span class="summary-lbl">Celková cena</span><span class="summary-val gold" id="sum-total">—</span></div>
+      </div>
+
+      <!-- Způsob platby -->
+      <div class="pay-methods">
+        <div class="pay-title">Způsob platby</div>
+        <div class="pay-grid">
+          <div class="pay-option selected" id="pay-online" onclick="selectPay('online')">
+            <span class="pay-icon">💳</span>
+            <div class="pay-name">Online kartou</div>
+            <div class="pay-sub">Karta · Apple Pay · Google Pay</div>
+          </div>
+          <div class="pay-option" id="pay-transfer" onclick="selectPay('transfer')">
+            <span class="pay-icon">🏦</span>
+            <div class="pay-name">Bankovní převod</div>
+            <div class="pay-sub">Platba předem na účet</div>
+          </div>
+          <div class="pay-option" id="pay-cash" onclick="selectPay('cash')">
+            <span class="pay-icon">💵</span>
+            <div class="pay-name">Hotovost na místě</div>
+            <div class="pay-sub">Zaplatíš při vstupu</div>
+          </div>
+        </div>
+
+        <div id="pay-online-block">
+          <div class="gateway-live">
+            <div class="gateway-live-header">
+              <span>🔒</span>
+              <span class="gateway-title">Stripe Checkout</span>
+              <span class="gateway-logos">Visa · Mastercard · Apple Pay · Google Pay</span>
+            </div>
+            <div class="gateway-live-body">
+              <div class="gateway-live-row">
+                <span class="gateway-live-icon">🎟️</span>
+                <div>
+                  <div class="gateway-live-label">Vstupenka</div>
+                  <div class="gateway-live-val" id="gw-ticket-name">—</div>
+                </div>
+              </div>
+              <div class="gateway-live-row">
+                <span class="gateway-live-icon">🔢</span>
+                <div>
+                  <div class="gateway-live-label">Počet</div>
+                  <div class="gateway-live-val" id="gw-qty">—</div>
+                </div>
+              </div>
+              <div class="gateway-live-row">
+                <span class="gateway-live-icon">💰</span>
+                <div>
+                  <div class="gateway-live-label">Celková cena</div>
+                  <div class="gateway-live-val gold" id="gw-total">—</div>
+                </div>
+              </div>
+              <div class="gateway-live-notice">
+                Po kliknutí na <strong>Zaplatit kartou</strong> budeš přesměrován na zabezpečenou Stripe stránku s přesně tímto počtem vstupenek.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bankovní převod -->
+        <div class="transfer-info hidden" id="pay-transfer-block">
+          <div class="transfer-box">
+            <div class="transfer-row"><span>Číslo účtu</span><strong>123456789 / 0800</strong></div>
+            <div class="transfer-row"><span>Variabilní symbol</span><strong id="tr-vs">—</strong></div>
+            <div class="transfer-row"><span>Částka</span><strong id="tr-amount">—</strong></div>
+            <div class="transfer-row"><span>Splatnost</span><strong>30. června 2026</strong></div>
+          </div>
+          <p style="font-size:.85rem;color:var(--muted);margin-top:1rem;line-height:1.6;">Po přijetí platby obdržíš potvrzení e-mailem s QR kódem vstupenky.</p>
+        </div>
+
+        <!-- Hotovost -->
+        <div class="transfer-info hidden" id="pay-cash-block">
+          <div class="transfer-box">
+            <div class="transfer-row"><span>Platba</span><strong>V hotovosti u vchodu</strong></div>
+            <div class="transfer-row"><span>Připrav částku</span><strong id="cash-amount">—</strong></div>
+            <div class="transfer-row"><span>Kdy</span><strong>15. července 2026 od 18:00</strong></div>
+          </div>
+          <p style="font-size:.85rem;color:var(--muted);margin-top:1rem;line-height:1.6;">Rezervace místa bude potvrzena e-mailem. Bez zaplacení při vstupu není možná účast.</p>
+        </div>
+      </div>
+
+      <div class="step-footer">
+        <button class="btn-ghost" onclick="goStep(2)">← Zpět</button>
+        <button class="btn-gold" id="pay-submit-btn" onclick="submitPayment()">
+          <span id="pay-btn-text">Potvrdit objednávku →</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── KROK 4: HOTOVO ── -->
+    <div class="reg-step hidden" id="reg-step-4">
+      <div class="success-wrap">
+        <span class="success-icon">🎉</span>
+        <h2 class="success-title">Hotovo!</h2>
+        <p class="success-sub" id="success-msg">Potvrzení bylo odesláno na váš e-mail.</p>
+        <div class="ticket-preview">
+          <div class="ticket-preview-header">
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:3px;color:var(--gold);">DrinkMaster Challenge</span>
+            <span style="font-size:.75rem;color:var(--muted);letter-spacing:2px;">15. 7. 2026</span>
+          </div>
+          <div class="ticket-preview-body">
+            <div class="tp-row"><span class="tp-lbl" id="tp-name-lbl">Tým</span><span class="tp-val" id="tp-name">—</span></div>
+            <div class="tp-row"><span class="tp-lbl">Typ účastníka</span><span class="tp-val" id="tp-type">—</span></div>
+            <div class="tp-row"><span class="tp-lbl">Vstupenka</span><span class="tp-val" id="tp-ticket">—</span></div>
+            <div class="tp-row"><span class="tp-lbl">Počet</span><span class="tp-val" id="tp-qty">—</span></div>
+            <div class="tp-row"><span class="tp-lbl">Místo</span><span class="tp-val">Anonymous Bar Praha</span></div>
+            <div class="tp-row"><span class="tp-lbl">Začátek</span><span class="tp-val">18:00</span></div>
+          </div>
+          <div class="ticket-preview-qr">
+            <div class="qr-placeholder"><div class="qr-inner"></div></div>
+            <div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--foam);font-size:.95rem;letter-spacing:1px;margin-bottom:.3rem;">QR kód vstupenky</div>
+              <div style="font-size:.75rem;color:var(--muted);">Ukáž při vstupu · 15. 7. 2026</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:1rem;justify-content:center;margin-top:2.5rem;flex-wrap:wrap;">
+          <button class="btn-gold" onclick="goTo('home')">← Zpět na hlavní stránku</button>
+          <button class="btn-ghost" onclick="window.print()">🖨 Vytisknout vstupenku</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-inner -->
+  <footer>
+    <div class="footer-logo">DrinkMaster Challenge</div>
+    <div class="footer-text">Ronovský · Novotný · Urban · 2026</div>
+    <div class="footer-links"><a href="#" onclick="goTo('home');return false;">Domů</a><a href="#">Instagram</a></div>
+  </footer>
+</div>
+
+<script>
+  /* ===== REGISTRATION FLOW ===== */
+  var reg = {
+    step: 1,
+    mode: 'tym',          // 'tym' | 'divak'
+    ticket: 'standard',
+    prices: {},
+    qty: 4,
+    pay: 'online'
+  };
+
+  function initPrices() {
+    reg.prices = reg.mode === 'tym'
+      ? { standard: 200, vip: 350 }
+      : { standard: 100, vip: 350 };
+  }
+  initPrices();
+
+  /* --- MODE SWITCH (toggle button at top) --- */
+  function switchMode(m) {
+    reg.mode = m;
+    initPrices();
+
+    document.getElementById('toggle-tym').classList.toggle('active', m === 'tym');
+    document.getElementById('toggle-divak').classList.toggle('active', m === 'divak');
+
+    // Step 1 labels
+    var isTym = m === 'tym';
+    document.getElementById('step1-title').textContent = isTym ? 'Údaje týmu' : 'Tvoje údaje';
+    document.getElementById('step1-desc').textContent  = isTym
+      ? 'Zadej název týmu, kontaktní e-mail a jméno každého ze čtyř členů.'
+      : 'Zadej své jméno a kontaktní e-mail pro rezervaci vstupenky.';
+    document.getElementById('lbl-name').textContent    = isTym ? 'Název týmu' : 'Celé jméno';
+    document.getElementById('f-name').placeholder      = isTym ? 'např. Pivní lvi...' : 'Jméno a příjmení';
+    document.getElementById('members-block').style.display = isTym ? '' : 'none';
+
+    // Ticket card
+    var stdIcon     = document.getElementById('tkt-standard-icon');
+    var stdName     = document.getElementById('tkt-standard-name');
+    var stdPrice    = document.getElementById('tkt-standard-price');
+    var stdFeatures = document.getElementById('tkt-standard-features');
+    var recBadge    = document.getElementById('tkt-rec-badge');
+    if (isTym) {
+      stdIcon.textContent  = '🏆';
+      stdName.textContent  = 'Soutěžní vstupenka';
+      stdPrice.textContent = '200';
+      stdFeatures.innerHTML = '<li>✓ Účast v soutěži</li><li>✓ Vstup na akci</li><li>✓ Doprovodný program</li><li>✓ Hlasování publika</li>';
+      recBadge.style.display = '';
+      document.getElementById('qty-hint').textContent = 'Tým = 4 osoby → doporučujeme 4 vstupenky';
+      reg.qty = 4;
+    } else {
+      stdIcon.textContent  = '👀';
+      stdName.textContent  = 'Divácká vstupenka';
+      stdPrice.textContent = '100';
+      stdFeatures.innerHTML = '<li>✓ Vstup na akci</li><li>✓ Doprovodný program</li><li>✓ Hlasování publika</li><li style="color:var(--muted)">✗ Bez soutěžní účasti</li>';
+      recBadge.style.display = 'none';
+      document.getElementById('qty-hint').textContent = 'Kolik vstupenek potřebuješ?';
+      reg.qty = 1;
+    }
+
+    reg.ticket = 'standard';
+    document.getElementById('tkt-standard').classList.add('selected');
+    document.getElementById('tkt-vip').classList.remove('selected');
+    document.getElementById('qty-display').textContent = reg.qty;
+    updateTotal();
+
+    // If mid-flow, reset to step 1
+    goStep(1);
+  }
+
+  /* --- STEPPER --- */
+  function goStep(n) {
+    // Validate step 1 before advancing
+    if (n > 1 && reg.step === 1) {
+      var nm = document.getElementById('f-name').value.trim();
+      var em = document.getElementById('f-email').value.trim();
+      if (!nm || !em) { shake(1); return; }
+      if (reg.mode === 'tym') {
+        var ok = true;
+        document.querySelectorAll('.member-input').forEach(function(i) { if (!i.value.trim()) ok = false; });
+        if (!ok) { shake(1); return; }
+      }
+    }
+
+    if (n === 3) buildSummary();
+
+    for (var i = 1; i <= 4; i++) {
+      var el = document.getElementById('reg-step-' + i);
+      if (el) el.classList.add('hidden');
+    }
+    var t = document.getElementById('reg-step-' + n);
+    if (t) t.classList.remove('hidden');
+
+    for (var j = 1; j <= 4; j++) {
+      var ind = document.getElementById('step-ind-' + j);
+      if (!ind) continue;
+      ind.classList.remove('active','done');
+      if (j === n) ind.classList.add('active');
+      else if (j < n) ind.classList.add('done');
+    }
+    for (var k = 1; k <= 3; k++) {
+      var ln = document.getElementById('sline-' + k);
+      if (ln) ln.classList.toggle('done', k < n);
+    }
+
+    reg.step = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function shake(s) {
+    var el = document.getElementById('reg-step-' + s);
+    el.style.animation = 'none'; el.offsetWidth; el.style.animation = 'regShake 0.4s ease';
+    el.querySelectorAll('.form-input').forEach(function(i) {
+      if (i.id !== 'f-phone' && i.id !== 'f-class' && !i.value.trim())
+        i.style.borderColor = 'rgba(255,70,70,0.6)';
+    });
+    setTimeout(function() {
+      el.querySelectorAll('.form-input').forEach(function(i) { i.style.borderColor = ''; });
+    }, 2000);
+  }
+
+  var shakeCSS = document.createElement('style');
+  shakeCSS.textContent = '@keyframes regShake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-7px)}50%{transform:translateX(7px)}}@keyframes spin{to{transform:rotate(360deg)}}';
+  document.head.appendChild(shakeCSS);
+
+  /* --- TICKETS --- */
+  function selectTicket(t) {
+    reg.ticket = t;
+    document.getElementById('tkt-standard').classList.toggle('selected', t === 'standard');
+    document.getElementById('tkt-vip').classList.toggle('selected', t === 'vip');
+    updateTotal();
+  }
+
+  function changeQty(d) {
+    reg.qty = Math.max(1, Math.min(20, reg.qty + d));
+    document.getElementById('qty-display').textContent = reg.qty;
+    updateTotal();
+  }
+
+  function updateTotal() {
+    var p = reg.prices[reg.ticket] || 0;
+    document.getElementById('qty-total').textContent = (p * reg.qty).toLocaleString('cs-CZ') + ' Kč';
+  }
+
+  /* --- SUMMARY --- */
+  function buildSummary() {
+    var nm    = document.getElementById('f-name').value.trim();
+    var em    = document.getElementById('f-email').value.trim();
+    var price = reg.prices[reg.ticket];
+    var total = price * reg.qty;
+    var tname = { standard: reg.mode === 'tym' ? 'Soutěžní vstupenka' : 'Divácká vstupenka', vip: 'VIP vstupenka' };
+
+    document.getElementById('sum-name-lbl').textContent = reg.mode === 'tym' ? 'Tým' : 'Jméno';
+    document.getElementById('sum-name').textContent     = nm;
+    document.getElementById('sum-email').textContent    = em;
+    document.getElementById('sum-ticket').textContent   = tname[reg.ticket] + ' (' + price + ' Kč)';
+    document.getElementById('sum-qty').textContent      = reg.qty + '×';
+    document.getElementById('sum-total').textContent    = total.toLocaleString('cs-CZ') + ' Kč';
+
+    var vs = Math.floor(Math.random() * 900000 + 100000);
+    ['tr-vs'].forEach(function(id) { var e = document.getElementById(id); if (e) e.textContent = vs; });
+    ['tr-amount','cash-amount'].forEach(function(id) {
+      var e = document.getElementById(id);
+      if (e) e.textContent = total.toLocaleString('cs-CZ') + ' Kč';
+    });
+
+    updateGatewayPreview();
+  }
+
+  /* --- PAYMENT --- */
+  function selectPay(m) {
+    reg.pay = m;
+    ['online','transfer','cash'].forEach(function(x) {
+      document.getElementById('pay-' + x).classList.toggle('selected', x === m);
+      var block = document.getElementById('pay-' + x + '-block');
+      if (block) block.classList.toggle('hidden', x !== m);
+    });
+    var labels = { online: 'Zaplatit kartou →', transfer: 'Potvrdit objednávku →', cash: 'Rezervovat místo →' };
+    document.getElementById('pay-btn-text').textContent = labels[m];
+  }
+
+  /* --- STRIPE GATEWAY PREVIEW (aktualizuje se při buildSummary) --- */
+  function updateGatewayPreview() {
+    var tname = { standard: reg.mode === 'tym' ? 'Soutěžní vstupenka' : 'Divácká vstupenka', vip: 'VIP vstupenka' };
+    var price = reg.prices[reg.ticket] || 0;
+    var el;
+    el = document.getElementById('gw-ticket-name'); if (el) el.textContent = tname[reg.ticket] || '—';
+    el = document.getElementById('gw-qty');          if (el) el.textContent = reg.qty + '× vstupenek';
+    el = document.getElementById('gw-total');        if (el) el.textContent = (price * reg.qty).toLocaleString('cs-CZ') + ' Kč';
+  }
+
+  /* --- SUBMIT --- */
+  function submitPayment() {
+    var btn = document.getElementById('pay-submit-btn');
+    var txt = document.getElementById('pay-btn-text');
+
+    // Převod + hotovost — lokální flow bez Stripe
+    if (reg.pay !== 'online') {
+      txt.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,0.2);border-top-color:#0a0a0a;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Zpracovávám...';
+      btn.disabled = true;
+      setTimeout(showSuccess, 1200);
+      return;
+    }
+
+    // Online platba → zavolej Netlify funkci → přesměruj na Stripe Checkout
+    txt.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,0.2);border-top-color:#0a0a0a;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Přesměrovávám na Stripe...';
+    btn.disabled = true;
+
+    var payload = {
+      ticket:   reg.ticket,
+      mode:     reg.mode,
+      qty:      reg.qty,
+      email:    document.getElementById('f-email').value.trim(),
+      teamName: document.getElementById('f-name').value.trim(),
+    };
+
+    fetch('/.netlify/functions/create-checkout', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.url) {
+        window.location.href = data.url; // → Stripe Checkout
+      } else {
+        showPayError(data.error || 'Nepodařilo se spustit platbu.');
+        btn.disabled = false;
+        txt.textContent = 'Zaplatit kartou →';
+      }
+    })
+    .catch(function() {
+      showPayError('Chyba připojení. Zkus to znovu.');
+      btn.disabled = false;
+      txt.textContent = 'Zaplatit kartou →';
+    });
+  }
+
+  function showPayError(msg) {
+    var existing = document.getElementById('pay-error-msg');
+    if (existing) existing.remove();
+    var el = document.createElement('p');
+    el.id = 'pay-error-msg';
+    el.style.cssText = 'color:#ff6b6b;font-size:.88rem;margin-top:.8rem;text-align:center;';
+    el.textContent = '⚠ ' + msg;
+    document.getElementById('pay-submit-btn').insertAdjacentElement('afterend', el);
+  }
+
+  function showSuccess() {
+    var nm    = document.getElementById('f-name').value.trim();
+    var em    = document.getElementById('f-email').value.trim();
+    var price = reg.prices[reg.ticket];
+    var total = (price * reg.qty).toLocaleString('cs-CZ');
+    var tname = { standard: reg.mode === 'tym' ? 'Soutěžní vstupenka' : 'Divácká vstupenka', vip: 'VIP vstupenka' };
+    var msgs  = {
+      online:   'Platba proběhla. Vstupenky odeslány na <strong style="color:var(--gold)">' + em + '</strong>.',
+      transfer: 'Objednávka přijata. Pokyny k převodu odeslány na <strong style="color:var(--gold)">' + em + '</strong>.',
+      cash:     'Rezervace potvrzena. Připrav <strong style="color:var(--gold)">' + total + ' Kč</strong> v hotovosti u vchodu.',
+    };
+
+    document.getElementById('success-msg').innerHTML   = msgs[reg.pay];
+    document.getElementById('tp-name').textContent     = nm;
+    document.getElementById('tp-type').textContent     = reg.mode === 'tym' ? 'Soutěžní tým' : 'Divák';
+    document.getElementById('tp-ticket').textContent   = tname[reg.ticket];
+    document.getElementById('tp-qty').textContent      = reg.qty + '× vstupenek';
+    document.getElementById('tp-name-lbl').textContent = reg.mode === 'tym' ? 'Tým' : 'Jméno';
+
+    goStep(4);
+  }
+
+  /* Init visibility */
+  document.getElementById('pay-transfer-block').classList.add('hidden');
+  document.getElementById('pay-cash-block').classList.add('hidden');
+
+  /* ===== ROUTER ===== */
+  function goTo(name) {
+    document.querySelectorAll('.page').forEach(function(p) {
+      p.classList.remove('visible');
+      p.style.display = 'none';
+    });
+    document.querySelectorAll('.nav-links a').forEach(function(a) {
+      a.classList.toggle('active', a.getAttribute('data-page') === name);
+    });
+    var target = document.getElementById('page-' + name);
+    if (!target) return;
+    target.style.display = 'block';
+    window.scrollTo(0, 0);
+    setTimeout(function() { target.classList.add('visible'); }, 20);
+  }
+
+  document.querySelectorAll('.nav-links a').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+      var page = this.getAttribute('data-page');
+      if (page) goTo(page);
+    });
+  });
+
+  document.querySelectorAll('.page').forEach(function(p) { p.style.display = 'none'; });
+
+  // Po návratu ze Stripe — detekuj výsledek platby
+  var urlParams = new URLSearchParams(window.location.search);
+  var platba = urlParams.get('platba');
+
+  if (platba === 'ok') {
+    var regPage = document.getElementById('page-registrace');
+    regPage.style.display = 'block';
+    setTimeout(function() { regPage.classList.add('visible'); }, 30);
+    for (var i = 1; i <= 4; i++) {
+      var el = document.getElementById('reg-step-' + i);
+      if (el) el.classList.add('hidden');
+    }
+    var step4 = document.getElementById('reg-step-4');
+    if (step4) step4.classList.remove('hidden');
+    for (var j = 1; j <= 4; j++) {
+      var ind = document.getElementById('step-ind-' + j);
+      if (ind) { ind.classList.remove('active','done'); ind.classList.add(j === 4 ? 'active' : 'done'); }
+    }
+    document.getElementById('success-msg').innerHTML =
+      'Platba kartou proběhla úspěšně! Potvrzení ti přijde e-mailem od Stripe.';
+    window.history.replaceState({}, '', '/');
+
+  } else if (platba === 'zrusena') {
+    var regPage2 = document.getElementById('page-registrace');
+    regPage2.style.display = 'block';
+    setTimeout(function() { regPage2.classList.add('visible'); }, 30);
+    goStep(3);
+    setTimeout(function() {
+      showPayError('Platba byla zrušena. Vyber způsob platby a zkus to znovu.');
+    }, 300);
+    window.history.replaceState({}, '', '/');
+
+  } else {
+    var homeEl = document.getElementById('page-home');
+    homeEl.style.display = 'block';
+    setTimeout(function() { homeEl.classList.add('visible'); }, 30);
+  }
+
+  /* ===== COUNTDOWN ===== */
+  function pad2(n) { return n < 10 ? '0' + n : String(n); }
+
+  function tick() {
+    var now    = new Date();
+    var target = new Date(2026, 6, 15, 18, 0, 0);
+    var diff   = Math.floor((target - now) / 1000);
+    if (diff <= 0) {
+      var g = document.getElementById('cd-grid');
+      if (g) g.innerHTML = '<div style="grid-column:1/-1;font-family:Bebas Neue,sans-serif;font-size:2rem;color:var(--gold);padding:1.5rem 0;">Akce právě probíhá!</div>';
+      return;
+    }
+    var eD = document.getElementById('cd-d');
+    var eH = document.getElementById('cd-h');
+    var eM = document.getElementById('cd-m');
+    var eS = document.getElementById('cd-s');
+    if (eD) eD.textContent = pad2(Math.floor(diff / 86400));
+    if (eH) eH.textContent = pad2(Math.floor((diff % 86400) / 3600));
+    if (eM) eM.textContent = pad2(Math.floor((diff % 3600) / 60));
+    if (eS) eS.textContent = pad2(diff % 60);
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  /* Responsive why-grid */
+  if (window.innerWidth < 700) {
+    var wg = document.querySelector('.why-grid');
+    if (wg) wg.style.gridTemplateColumns = '1fr';
+  }
+</script>
+</body>
+</html>
